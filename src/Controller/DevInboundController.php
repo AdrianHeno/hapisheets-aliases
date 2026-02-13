@@ -83,6 +83,11 @@ class DevInboundController extends AbstractController
         $message->setSubject($subject);
         $message->setFromAddress($from);
         $message->setBody($body);
+        $preview = mb_substr(preg_replace('/\s+/', ' ', trim($body)) ?: '', 0, 120);
+        if ($preview !== '') {
+            $message->setPreviewSnippet($preview);
+        }
+        $message->setHasHtmlBody(false);
 
         $this->entityManager->persist($message);
         $this->entityManager->flush();

@@ -1,23 +1,59 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}{{ message.subject }}{% endblock %}
+{% block title %}{{ parsed ? parsed.subject : message.subject }}{% endblock %}
+
+{% block extra_styles %}
+<link rel="stylesheet" href="{{ asset('styles/email-inbox.css') }}">
+{% endblock %}
 
 {% block body %}
-    {% include 'components/heading.html.twig' with { level: 1, content: message.subject } %}
-
-    <p class="mt-2 text-sm text-neutral-600">
-        <strong>From:</strong> {{ message.fromAddress }} &middot;
-        <strong>Received:</strong> {{ message.receivedAt|date('Y-m-d H:i') }}
+<div class="email-view">
+    <p class="email-view__back">
+        <a href="{{ path('app_alias_inbox', { id: message.alias.id }) }}">← Inbox ({{ message.alias.localPart }}@{{ alias_domain }})</a>
     </p>
 
-    <p class="mb-4">
-        <a href="{{ path('app_alias_inbox', { id: message.alias.id }) }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">← Inbox ({{ message.alias.localPart }}@{{ alias_domain }})</a>
-    </p>
+    <header class="email-view__header">
+        <h1 class="email-view__subject">{{ parsed ? parsed.subject : message.subject }}</h1>
+        <dl class="email-view__meta">
+            <div class="email-view__meta-row">
+                <dt>From</dt>
+                <dd>
+                    {% if parsed %}
+                        {% if parsed.fromName %}{{ parsed.fromName }} <span class="email-view__email">&lt;{{ parsed.fromEmail }}&gt;</span>{% else %}<span class="email-view__email">{{ parsed.fromEmail }}</span>{% endif %}
+                    {% else %}
+                        <span class="email-view__email">{{ message.fromAddress }}</span>
+                    {% endif %}
+                </dd>
+            </div>
+            {% if parsed and parsed.to %}
+            <div class="email-view__meta-row">
+                <dt>To</dt>
+                <dd><span class="email-view__email">{{ parsed.to }}</span></dd>
+            </div>
+            {% endif %}
+            <div class="email-view__meta-row">
+                <dt>Date</dt>
+                <dd>{{ parsed and parsed.date ? parsed.date|date('D, M j, Y \a\t g:i A') : message.receivedAt|date('D, M j, Y \a\t g:i A') }}</dd>
+            </div>
+        </dl>
+    </header>
 
-    <div class="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-neutral-900 whitespace-pre-wrap">{{ message.body }}</div>
+    <details class="email-view__raw">
+        <summary>Raw source</summary>
+        <pre class="email-view__raw-pre">{{ raw_mime }}</pre>
+    </details>
 
-    <form method="post" action="{{ path('app_message_delete', { id: message.id }) }}" class="mt-4" data-turbo="false">
+    <div class="email-view__body">
+        {% if body_safe_html is not null %}
+            <div class="email-view__body-content">{{ body_safe_html|raw }}</div>
+        {% else %}
+            <div class="email-view__body-plain">{{ message.body }}</div>
+        {% endif %}
+    </div>
+
+    <form method="post" action="{{ path('app_message_delete', { id: message.id }) }}" class="email-view__actions" data-turbo="false">
         <input type="hidden" name="_token" value="{{ csrf_token('delete_message') }}">
         {% include 'components/button.html.twig' with { variant: 'secondary', type: 'submit', label: 'Delete message' } %}
     </form>
+</div>
 {% endblock %}

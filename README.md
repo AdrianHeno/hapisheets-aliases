@@ -13,12 +13,14 @@ A web app for generating and managing email aliases under **hapisheets.com** (e.
 | **Dashboard** | View all your aliases in a table: full address, status (Enabled/Disabled), created date, and a **Create alias** link. Both `/` and `/dashboard` show the same dashboard. |
 | **Create alias** | Generate a new alias with one click (no fields to fill). Format: word + short suffix (e.g. `river-9k2f@hapisheets.com`). You are redirected to the dashboard with a success message showing the new address. |
 | **Disable alias** | Turn off an alias from the dashboard via the **Disable** button in the Actions column. Disabled aliases show status “Disabled” and will reject mail when inbound email is added later. Only your own aliases can be disabled (others return 404). |
-| **Inbox** | From the dashboard, open **Inbox** for an alias to see messages received by that alias (From, Subject, Received, View). Only the alias owner can access an inbox; others get 404. |
-| **View / delete message** | Open a message from the inbox to read it (subject, from, date, body). You can **Delete message**; after delete you are redirected back to that alias's inbox. Only the alias owner can view or delete; others get 404. |
+| **Inbox** | From the dashboard, open **Inbox** for an alias to see messages (From, Subject, **Preview** snippet, Received, **Type** badge when HTML, View). Only the alias owner can access an inbox; others get 404. |
+| **View / delete message** | Open a message to read it in an email-client layout: subject (h1), From (name + email), To, Date, collapsible **Raw source** (raw MIME in `<pre>`), and **body** rendered as safe HTML (parsed from MIME when available; script/iframe/object stripped). **Delete message** redirects back to that alias's inbox. Only the alias owner can view or delete; others get 404. |
 | **Log out** | A **Log out** link is shown in the global nav when you are logged in; it points to `/logout` and ends your session. When not authenticated, the nav shows **Log in** and **Register** instead. |
-| **Mailgun inbound webhook** | `POST /inbound/mailgun/raw-mime` accepts Mailgun’s inbound payload (multipart/form-data). It reads `recipient` and `body-mime`, looks up the alias by the local part (before `@`, lowercased) with `enabled=true`, and stores the raw MIME. Signature verification is optional: if `MAILGUN_WEBHOOK_SIGNING_KEY` is set, the app verifies Mailgun’s `timestamp`, `token`, and `signature` (HMAC-SHA256); if unset, verification is skipped and a warning is logged. Returns 200 OK, 400 if required fields are missing, 403 if the key is set and the signature is invalid, 404 if the alias is not found or disabled. This path is publicly accessible (no login); only `/inbound/mailgun/*` is public; other `/inbound/*` routes remain protected. |
+| **Mailgun inbound webhook** | `POST /inbound/mailgun/raw-mime` accepts Mailgun’s inbound payload (multipart/form-data). It reads `recipient` and `body-mime`, looks up the alias by the local part (before `@`, lowercased) with `enabled=true`, stores the raw MIME in `InboundRaw`, and creates a `Message` (subject, from, body, optional preview snippet and HTML flag from parsed MIME). Signature verification is optional: if `MAILGUN_WEBHOOK_SIGNING_KEY` is set, the app verifies Mailgun’s `timestamp`, `token`, and `signature` (HMAC-SHA256); if unset, verification is skipped and a warning is logged. Returns 200 OK, 400/403/404 as above. Public (no login). |
 
 All alias and message actions are scoped to the logged-in user; you only see and can change your own aliases and their messages.
+
+**Email parsing and display:** Inbound raw MIME is stored unchanged. For display, the app parses it with [zbateson/mail-mime-parser](https://github.com/zbateson/php-mime-parser) and builds a view model (subject, from, to, date, text/HTML bodies). The **chosen body** prefers HTML when present (e.g. multipart/alternative); otherwise plain text is escaped and converted with `nl2br`. Before rendering, HTML is sanitized with [Symfony HtmlSanitizer](https://symfony.com/doc/current/html_sanitizer.html) (safe elements allowed; script, iframe, object, form dropped). See `docs/decisions.md` for more.
 
 ---
 
@@ -81,11 +83,11 @@ After login you land on the **Dashboard**:
 ### 6. Inbox (`/aliases/{id}/inbox`)
 
 - On the dashboard, click **Inbox** for an alias.
-- You see messages for that alias (From, Subject, Received) or "No messages yet." Click **View** to open a message.
+- You see messages for that alias: **From**, **Subject**, **Preview** (first ~120 chars of text body, or —), **Received**, **Type** (HTML badge when the message has an HTML part), and **View**. Click **View** to open a message.
 
 ### 7. View and delete message (`/messages/{id}`)
 
-- From an inbox, click **View** on a message to read it (subject, from, received date, body).
+- From an inbox, click **View** to open the message in an email-client layout: **Subject** (h1), **From** (name + email), **To**, **Date**, a collapsible **Raw source** (raw MIME in a `<pre>` block), and the **body** rendered as safe HTML (when raw MIME exists it is parsed; HTML is preferred over plain text; script/iframe/object and dangerous attributes are stripped). If the message has no stored raw MIME, the stored body is shown as plain text.
 - Use **Delete message** to remove it; you are redirected to that alias's inbox with a success flash.
 
 ### 8. Disable alias
@@ -149,4 +151,5 @@ More detail: `docs/dev-commands.md`. To seed inbox messages locally, use `POST /
 - `docs/spec.md` — Product goal and MVP scope.
 - `docs/mvp-design.md` — Data model and routes design.
 - `docs/decisions.md` — Tech and product decisions (domain, alias format, etc.).
+- `docs/acceptance-criteria.md` — Acceptance criteria for inbox, view message, and webhook.
 - `docs/working-agreement.md` — How we work (tasks, acceptance criteria, security). 

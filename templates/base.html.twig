@@ -8,6 +8,7 @@
         {% block stylesheets %}
         <script src="https://cdn.tailwindcss.com"></script>
         {% endblock %}
+        {% block extra_styles %}{% endblock %}
 
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}

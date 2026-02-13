@@ -20,18 +20,21 @@
 
 ## Message entity
 
-| Field         | Type     | Notes |
-|---------------|----------|--------|
-| `id`          | integer  | PK. |
-| `alias_id`    | integer  | FK to Alias; required. |
-| `received_at` | datetime | When the message was received. |
-| `subject`     | string   | 255 chars. |
-| `from_address`| string   | 255 chars. |
-| `body`        | text     | Message body. |
+| Field            | Type     | Notes |
+|------------------|----------|--------|
+| `id`             | integer  | PK. |
+| `alias_id`       | integer  | FK to Alias; required. |
+| `received_at`    | datetime | When the message was received. |
+| `subject`        | string   | 255 chars. |
+| `from_address`   | string   | 255 chars. |
+| `body`           | text     | Message body (raw MIME when from webhook). |
+| `inbound_raw_id` | integer  | FK to InboundRaw; nullable, unique. Optional one-to-one link to raw MIME for parsed display. |
+| `preview_snippet`| string   | 255 chars, nullable. First ~120 chars of text body for inbox preview. |
+| `has_html_body`  | boolean  | Whether the message has an HTML part (from parsed MIME at ingest). |
 
-**Indexes:** Non-unique on `(alias_id, received_at)` for listing by alias by date.
+**Indexes:** Non-unique on `(alias_id, received_at)` for listing by alias by date. Unique on `inbound_raw_id` (one-to-one with InboundRaw).
 
-**Relationships:** Many-to-one to Alias.
+**Relationships:** Many-to-one to Alias. Optional one-to-one to InboundRaw.
 
 ## InboundRaw entity (raw MIME storage)
 
