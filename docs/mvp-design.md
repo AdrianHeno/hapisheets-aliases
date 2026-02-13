@@ -23,7 +23,7 @@
 | Route                 | Method | Purpose |
 |-----------------------|--------|--------|
 | `/`                   | GET    | Dashboard: list current user's aliases; link to create. |
-| `/register`           | GET, POST | Register. |
+| `/register`           | GET, POST | Register (email + password, then redirect to /dashboard). |
 | `/login`              | GET, POST | Login. |
 | `/logout`             | any    | Logout. |
 | `/aliases/new`        | GET, POST | Create alias. |

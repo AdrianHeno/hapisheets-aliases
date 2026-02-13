@@ -9,5 +9,4 @@ framework:
             - submit
             - authenticate
             - logout
-            - create_alias
-            - disable_alias
+            # create_alias and disable_alias use session-based CSRF (token in form only)

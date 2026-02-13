@@ -34,6 +34,8 @@ class DashboardControllerTest extends WebTestCase
         self::assertSelectorExists('a[href*="/aliases/new"]');
         self::assertSelectorTextContains('a[href*="/aliases/new"]', 'Create alias');
         self::assertSelectorTextContains('h2', 'Your aliases');
+        self::assertSelectorExists('a[href*="/logout"]');
+        self::assertSelectorTextContains('a[href*="/logout"]', 'Log out');
     }
 
     public function testIndexListsOnlyCurrentUserAliases(): void
