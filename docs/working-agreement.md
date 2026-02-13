@@ -6,6 +6,7 @@
 - Prefer tests for anything non-trivial
 - No big refactors without a clear reason
 - Keep changes minimal and Symfony-conventional
+- All changes should be submitted as PRs that will be reviewed 
 
 ## Definition of Done
 - Feature works manually
