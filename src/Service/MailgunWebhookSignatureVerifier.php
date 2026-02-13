@@ -6,10 +6,13 @@ namespace App\Service;
 
 class MailgunWebhookSignatureVerifier
 {
+    private string $signingKey;
+
     public function __construct(
-        private readonly string $signingKey,
+        ?string $signingKey = null,
         private readonly int $maxSkewSeconds = 900, // 15 minutes
     ) {
+        $this->signingKey = $signingKey ?? '';
     }
 
     public function isConfigured(): bool

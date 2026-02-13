@@ -18,7 +18,7 @@ Keep `enabled` as boolean. When disabled: alias is hidden/disabled in UI and **r
 ## Inbound email provider
 For MVP, inbound email is implemented via a **Mailgun HTTP webhook**:
 
-- Webhook endpoint: `POST /inbound/mailgun/raw-mime` (public, signature-verified).
+- Webhook endpoint: `POST /inbound/mailgun/raw-mime` (public). Signature verification is optional: when `MAILGUN_WEBHOOK_SIGNING_KEY` is set, requests are verified; when unset, verification is skipped.
 - Stores the full raw MIME in a separate `InboundRaw` entity linked to the alias.
 - Alias lookup is by recipient local part and `enabled=true`; disabled or unknown aliases return 404.
 

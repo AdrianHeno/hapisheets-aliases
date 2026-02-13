@@ -16,7 +16,7 @@ A web app for generating and managing email aliases under **hapisheets.com** (e.
 | **Inbox** | From the dashboard, open **Inbox** for an alias to see messages received by that alias (From, Subject, Received, View). Only the alias owner can access an inbox; others get 404. |
 | **View / delete message** | Open a message from the inbox to read it (subject, from, date, body). You can **Delete message**; after delete you are redirected back to that alias's inbox. Only the alias owner can view or delete; others get 404. |
 | **Log out** | A **Log out** link is shown in the global nav when you are logged in; it points to `/logout` and ends your session. When not authenticated, the nav shows **Log in** and **Register** instead. |
-| **Mailgun inbound webhook** | `POST /inbound/mailgun/raw-mime` accepts Mailgun’s inbound payload (multipart/form-data). It reads `recipient` and `body-mime`, looks up the alias by the local part (before `@`, lowercased) with `enabled=true`, and stores the raw MIME. The request must include Mailgun’s `timestamp`, `token`, and `signature`; the app verifies the signature using `MAILGUN_WEBHOOK_SIGNING_KEY` (HMAC-SHA256). Returns 200 OK, 400 if required fields are missing, 403 if the signature is invalid, 404 if the alias is not found or disabled, and 500 if the signing key is not set (with an error logged). This path is publicly accessible (no login); only `/inbound/mailgun/*` is public; other `/inbound/*` routes remain protected. |
+| **Mailgun inbound webhook** | `POST /inbound/mailgun/raw-mime` accepts Mailgun’s inbound payload (multipart/form-data). It reads `recipient` and `body-mime`, looks up the alias by the local part (before `@`, lowercased) with `enabled=true`, and stores the raw MIME. Signature verification is optional: if `MAILGUN_WEBHOOK_SIGNING_KEY` is set, the app verifies Mailgun’s `timestamp`, `token`, and `signature` (HMAC-SHA256); if unset, verification is skipped and a warning is logged. Returns 200 OK, 400 if required fields are missing, 403 if the key is set and the signature is invalid, 404 if the alias is not found or disabled. This path is publicly accessible (no login); only `/inbound/mailgun/*` is public; other `/inbound/*` routes remain protected. |
 
 All alias and message actions are scoped to the logged-in user; you only see and can change your own aliases and their messages.
 
@@ -113,9 +113,9 @@ After login you land on the **Dashboard**:
 | `/aliases/{id}/disable` | POST | Disable an alias (must own it; returns 404 otherwise). |
 | `/messages/{id}` | GET | View a message (owner of the message’s alias only; 404 otherwise). |
 | `/messages/{id}/delete` | POST | Delete a message (owner only, CSRF required; 404 otherwise). |
-| `/inbound/mailgun/raw-mime` | POST | Mailgun inbound webhook: multipart/form-data with `recipient`, `body-mime`, and Mailgun’s `timestamp`, `token`, `signature`. Stores raw MIME for the alias identified by the recipient’s local part (enabled only). Public (no login); signature verified via `MAILGUN_WEBHOOK_SIGNING_KEY`. Returns 200 OK, 400/403/404/500 as above. |
+| `/inbound/mailgun/raw-mime` | POST | Mailgun inbound webhook: multipart/form-data with `recipient`, `body-mime`. Optional: `timestamp`, `token`, `signature` (verified when `MAILGUN_WEBHOOK_SIGNING_KEY` is set). Stores raw MIME for the alias identified by the recipient’s local part (enabled only). Public (no login). Returns 200 OK, 400/403/404 as above. |
 
-Protected routes (dashboard, alias and message actions) require a logged-in user; otherwise you are redirected to `/login`. Registration, login, and `/inbound/mailgun/*` (webhook) are public; the webhook is secured by Mailgun signature verification. Attempting to access another user’s alias or message returns 404.
+Protected routes (dashboard, alias and message actions) require a logged-in user; otherwise you are redirected to `/login`. Registration, login, and `/inbound/mailgun/*` (webhook) are public. When the signing key is set, the webhook verifies Mailgun’s signature; when unset, verification is skipped. Attempting to access another user’s alias or message returns 404.
 
 ---
 
@@ -125,7 +125,7 @@ Protected routes (dashboard, alias and message actions) require a logged-in user
 |------|--------|
 | **Alias domain** | `config/services.yaml`: parameter `app.alias_domain` (default: `hapisheets.com`). Used for display and future mail handling. |
 | **Database** | `DATABASE_URL` in `.env` / `.env.local`. |
-| **Mailgun webhook signing key** | `MAILGUN_WEBHOOK_SIGNING_KEY` in `.env` / `.env.local`. Required for `POST /inbound/mailgun/raw-mime`: the app verifies Mailgun’s webhook signature (HMAC-SHA256 of `timestamp` + `token`). If unset, the endpoint returns 500 and logs an error. Use your Mailgun HTTP webhook signing key from the Mailgun dashboard. |
+| **Mailgun webhook signing key** | `MAILGUN_WEBHOOK_SIGNING_KEY` in `.env` / `.env.local` (optional). When set, the app verifies Mailgun’s webhook signature (HMAC-SHA256 of `timestamp` + `token`) for `POST /inbound/mailgun/raw-mime`; when unset, verification is skipped and a warning is logged. Use your Mailgun HTTP webhook signing key from the Mailgun dashboard if Mailgun signs requests. |
 | **Security** | `config/packages/security.yaml`: password hashing, form login, access control. Only `/inbound/mailgun/` is public (for the webhook); all other routes require login unless explicitly listed (e.g. `/login`, `/register`). |
 
 ---

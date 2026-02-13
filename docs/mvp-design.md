@@ -59,6 +59,6 @@
 | `/aliases/{id}/disable` | POST   | Disable alias (owner only); redirect back. |
 | `/messages/{id}`        | GET    | View message (owner of message's alias only). |
 | `/messages/{id}/delete` | POST   | Delete message (owner only, CSRF). |
-| `/inbound/mailgun/raw-mime` | POST | Mailgun webhook: accepts multipart/form-data with `recipient`, `body-mime`, `timestamp`, `token`, and `signature`. Verifies the signature and stores raw MIME for the alias identified by the recipient’s local part (enabled only). Public (no login); used for inbound email. |
+| `/inbound/mailgun/raw-mime` | POST | Mailgun webhook: accepts multipart/form-data with `recipient`, `body-mime`. Optionally verifies `timestamp`, `token`, `signature` when `MAILGUN_WEBHOOK_SIGNING_KEY` is set; otherwise skips verification. Stores raw MIME for the alias identified by the recipient’s local part (enabled only). Public (no login); used for inbound email. |
 
 Domain for display and mail is read from config, not DB.
