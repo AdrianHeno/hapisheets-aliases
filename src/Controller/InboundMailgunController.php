@@ -29,10 +29,12 @@ class InboundMailgunController extends AbstractController
     #[Route('/raw-mime', name: 'app_inbound_mailgun_raw_mime', methods: ['POST'])]
     public function rawMime(Request $request): Response
     {
+        $params = $this->getRequestParams($request);
+
         if ($this->signatureVerifier->isConfigured()) {
-            $timestamp = $request->request->get('timestamp');
-            $token = $request->request->get('token');
-            $signature = $request->request->get('signature');
+            $timestamp = $params['timestamp'] ?? null;
+            $token = $params['token'] ?? null;
+            $signature = $params['signature'] ?? null;
             $timestamp = $timestamp !== null ? (string) $timestamp : null;
             $token = $token !== null ? (string) $token : null;
             $signature = $signature !== null ? (string) $signature : null;
@@ -46,26 +48,26 @@ class InboundMailgunController extends AbstractController
             $this->logger->warning('Mailgun webhook signature verification skipped: MAILGUN_WEBHOOK_SIGNING_KEY is not set.');
         }
 
-        $recipient = $request->request->get('recipient');
-        $bodyMime = $request->request->get('body-mime');
-        $bodyPlain = $request->request->get('body-plain');
+        $recipient = $params['recipient'] ?? null;
+        $bodyMime = $params['body-mime'] ?? null;
+        $bodyPlain = $params['body-plain'] ?? null;
 
         // Mailgun sends body-mime only when the forward URL ends with "mime" or "raw-mime"; otherwise it sends body-plain/body-html
         $body = $bodyMime !== null && $bodyMime !== '' ? (string) $bodyMime : ($bodyPlain !== null ? (string) $bodyPlain : '');
 
         if ($recipient === null || $recipient === '') {
-            $this->logger->warning('Mailgun raw-mime webhook missing recipient.', ['request_keys' => array_keys($request->request->all())]);
+            $this->logBadRequest($request, $params, 'missing_recipient');
             return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
         }
 
         $recipient = trim((string) $recipient);
         if ($recipient === '') {
-            $this->logger->warning('Mailgun raw-mime webhook empty recipient.', ['request_keys' => array_keys($request->request->all())]);
+            $this->logBadRequest($request, $params, 'empty_recipient');
             return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
         }
 
         if ($body === '') {
-            $this->logger->warning('Mailgun raw-mime webhook missing body (body-mime and body-plain empty or absent). Ensure forward URL ends with raw-mime for raw MIME, or body-plain will be used.', ['request_keys' => array_keys($request->request->all())]);
+            $this->logBadRequest($request, $params, 'missing_body');
             return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -92,5 +94,41 @@ class InboundMailgunController extends AbstractController
         $this->entityManager->flush();
 
         return new Response('OK', Response::HTTP_OK);
+    }
+
+    /**
+     * Get POST parameters from the request. If Symfony did not parse the body (e.g. wrong Content-Type),
+     * attempt to parse application/x-www-form-urlencoded from raw content.
+     *
+     * @return array<string, mixed>
+     */
+    private function getRequestParams(Request $request): array
+    {
+        $params = $request->request->all();
+        if ($params !== []) {
+            return $params;
+        }
+        $content = $request->getContent();
+        $contentType = $request->headers->get('Content-Type', '');
+        if ($content !== '' && $content !== false && !str_contains($contentType, 'boundary')) {
+            parse_str($content, $parsed);
+            if (is_array($parsed)) {
+                return $parsed;
+            }
+        }
+        return [];
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function logBadRequest(Request $request, array $params, string $reason): void
+    {
+        $this->logger->warning('Mailgun raw-mime webhook bad request.', [
+            'reason' => $reason,
+            'content_type' => $request->headers->get('Content-Type'),
+            'request_keys' => array_keys($params),
+            'content_length' => $request->headers->get('Content-Length'),
+        ]);
     }
 }
