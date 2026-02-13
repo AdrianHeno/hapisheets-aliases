@@ -32,11 +32,12 @@ security:
             # https://symfony.com/doc/current/security/impersonating_user.html
             # switch_user: true
 
-    # Note: Only the *first* matching rule is applied. /dev/* route exists only in dev/test.
+    # Note: Only the *first* matching rule is applied. Order matters: specific paths first.
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
         - { path: ^/dev, roles: PUBLIC_ACCESS }
+        - { path: ^/inbound/mailgun/, roles: PUBLIC_ACCESS }
         - { path: ^/aliases, roles: ROLE_USER }
         - { path: ^/, roles: ROLE_USER }
         # - { path: ^/admin, roles: ROLE_ADMIN }

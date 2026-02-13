@@ -33,6 +33,19 @@
 
 **Relationships:** Many-to-one to Alias.
 
+## InboundRaw entity (raw MIME storage)
+
+| Field         | Type     | Notes |
+|---------------|----------|--------|
+| `id`          | integer  | PK. |
+| `alias_id`    | integer  | FK to Alias; required. |
+| `received_at` | datetime | When the raw message was received. |
+| `raw_mime`    | text     | Full raw MIME payload from the provider (e.g. Mailgun). |
+
+**Indexes:** Non-unique on `(alias_id, received_at)` for listing by alias by date.
+
+**Relationships:** Many-to-one to Alias.
+
 ## Routes / pages
 
 | Route                   | Method | Purpose |
@@ -46,5 +59,6 @@
 | `/aliases/{id}/disable` | POST   | Disable alias (owner only); redirect back. |
 | `/messages/{id}`        | GET    | View message (owner of message's alias only). |
 | `/messages/{id}/delete` | POST   | Delete message (owner only, CSRF). |
+| `/inbound/mailgun/raw-mime` | POST | Mailgun webhook: accepts multipart/form-data with `recipient`, `body-mime`, `timestamp`, `token`, and `signature`. Verifies the signature and stores raw MIME for the alias identified by the recipient’s local part (enabled only). Public (no login); used for inbound email. |
 
 Domain for display and mail is read from config, not DB.

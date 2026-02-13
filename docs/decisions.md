@@ -14,3 +14,12 @@ Domain (e.g. hapisheets.com) is a config value, not stored in DB. Single-domain 
 
 ## Alias enabled flag
 Keep `enabled` as boolean. When disabled: alias is hidden/disabled in UI and **reject mail later** (inbound handling will use this).
+
+## Inbound email provider
+For MVP, inbound email is implemented via a **Mailgun HTTP webhook**:
+
+- Webhook endpoint: `POST /inbound/mailgun/raw-mime` (public, signature-verified).
+- Stores the full raw MIME in a separate `InboundRaw` entity linked to the alias.
+- Alias lookup is by recipient local part and `enabled=true`; disabled or unknown aliases return 404.
+
+Other providers (e.g. AWS SES) and richer parsing can be added later without changing the public dashboard / inbox UI.
