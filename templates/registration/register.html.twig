@@ -1,13 +1,40 @@
 {% extends 'base.html.twig' %}
+{% import 'components/input_classes.html.twig' as input_ui %}
 
 {% block title %}Register{% endblock %}
 
 {% block body %}
-    <h1>Register</h1>
-    {{ form_start(registrationForm) }}
-        {{ form_row(registrationForm.email) }}
-        {{ form_row(registrationForm.plainPassword) }}
-        <button type="submit" class="btn">Register</button>
+    {% set input_class = input_ui.classes() %}
+    {% include 'components/heading.html.twig' with { level: 1, content: 'Register' } %}
+
+    {{ form_start(registrationForm, { attr: { class: 'max-w-sm mt-4' } }) }}
+
+        {% set email_errors = registrationForm.email.vars.errors|map(e => e.message)|default([]) %}
+        {% embed 'components/form_group.html.twig' with { label_for: registrationForm.email.vars.id, label_text: 'Email', required: true, errors: email_errors } %}
+            {% block input %}
+                {{ form_widget(registrationForm.email, { attr: { class: input_class } }) }}
+            {% endblock %}
+        {% endembed %}
+
+        {% set first_errors = registrationForm.plainPassword.first.vars.errors|map(e => e.message)|default([]) %}
+        {% embed 'components/form_group.html.twig' with { label_for: registrationForm.plainPassword.first.vars.id, label_text: 'Password', required: true, errors: first_errors } %}
+            {% block input %}
+                {{ form_widget(registrationForm.plainPassword.first, { attr: { class: input_class } }) }}
+            {% endblock %}
+        {% endembed %}
+
+        {% set second_errors = registrationForm.plainPassword.second.vars.errors|map(e => e.message)|default([]) %}
+        {% set compound_errors = registrationForm.plainPassword.vars.errors|map(e => e.message)|default([]) %}
+        {% set repeat_errors = second_errors|merge(compound_errors) %}
+        {% embed 'components/form_group.html.twig' with { label_for: registrationForm.plainPassword.second.vars.id, label_text: 'Repeat Password', required: true, errors: repeat_errors } %}
+            {% block input %}
+                {{ form_widget(registrationForm.plainPassword.second, { attr: { class: input_class } }) }}
+            {% endblock %}
+        {% endembed %}
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+            {% include 'components/button.html.twig' with { variant: 'primary', type: 'submit', label: 'Register' } %}
+            <a href="{{ path('app_login') }}" class="text-sm text-neutral-600 hover:text-neutral-900">Already have an account? Log in</a>
+        </div>
     {{ form_end(registrationForm) }}
-    <p><a href="{{ path('app_login') }}">Already have an account? Log in</a></p>
 {% endblock %}

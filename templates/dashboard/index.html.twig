@@ -3,48 +3,47 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block body %}
-    <h1>Dashboard</h1>
+    {% include 'components/heading.html.twig' with { level: 1, content: 'Dashboard' } %}
 
-    {% for label, messages in app.flashes %}
-        {% for message in messages %}
-            <div class="alert alert-{{ label }}">{{ message }}</div>
-        {% endfor %}
-    {% endfor %}
+    {% include 'components/flash_messages.html.twig' %}
 
-    <p><a href="{{ path('app_alias_new') }}">Create alias</a></p>
+    <p class="mb-6">
+        {% include 'components/button.html.twig' with { variant: 'primary', label: 'Create alias', url: path('app_alias_new') } %}
+    </p>
 
-    <h2>Your aliases</h2>
+    {% include 'components/heading.html.twig' with { level: 2, content: 'Your aliases' } %}
+
     {% if aliases is empty %}
-        <p>You have no aliases yet. <a href="{{ path('app_alias_new') }}">Create one</a>.</p>
+        <p class="mt-2 text-neutral-600">You have no aliases yet. {% include 'components/button.html.twig' with { variant: 'secondary', label: 'Create one', url: path('app_alias_new') } %}</p>
     {% else %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Address</th>
-                    <th>Status</th>
-                    <th>Created</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
+        {% embed 'components/table.html.twig' %}
+            {% block thead %}
+                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Address</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Status</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Created</th>
+                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Actions</th>
+            {% endblock %}
+            {% block tbody %}
                 {% for alias in aliases %}
                     <tr>
-                        <td>{{ alias.localPart }}@{{ alias_domain }}</td>
-                        <td>{{ alias.enabled ? 'Enabled' : 'Disabled' }}</td>
-                        <td>{{ alias.createdAt|date('Y-m-d H:i') }}</td>
-                        <td>
+                        <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ alias.localPart }}@{{ alias_domain }}</td>
+                        <td class="px-4 py-3 text-left text-sm">
+                            {% include 'components/badge.html.twig' with { variant: alias.enabled ? 'enabled' : 'disabled', label: alias.enabled ? 'Enabled' : 'Disabled' } %}
+                        </td>
+                        <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ alias.createdAt|date('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-3 text-left text-sm">
                             {% if alias.enabled %}
-                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" style="display: inline;" data-turbo="false">
+                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" class="inline" data-turbo="false">
                                     <input type="hidden" name="_token" value="{{ csrf_token('disable_alias') }}">
-                                    <button type="submit">Disable</button>
+                                    {% include 'components/button.html.twig' with { variant: 'secondary', type: 'submit', label: 'Disable' } %}
                                 </form>
                             {% else %}
-                                —
+                                <span class="text-neutral-500">—</span>
                             {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+            {% endblock %}
+        {% endembed %}
     {% endif %}
 {% endblock %}

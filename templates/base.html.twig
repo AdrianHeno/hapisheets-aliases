@@ -6,28 +6,27 @@
         <title>{% block title %}Welcome!{% endblock %} — Hapisheets Alias Manager</title>
         <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
         {% block stylesheets %}
-        <style>
-            nav { padding: 0.5rem 1rem; border-bottom: 1px solid #ccc; }
-            nav a { margin-right: 1rem; }
-        </style>
+        <script src="https://cdn.tailwindcss.com"></script>
         {% endblock %}
 
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
     </head>
-    <body>
-        <nav aria-label="Main">
-            {% if app.user %}
-                <a href="{{ path('app_home') }}">Dashboard</a>
-                <a href="{{ path('app_alias_new') }}">Create alias</a>
-                <a href="{{ path('app_logout') }}">Log out</a>
-            {% else %}
-                <a href="{{ path('app_login') }}">Log in</a>
-                <a href="{{ path('app_register') }}">Register</a>
-            {% endif %}
+    <body class="bg-white text-neutral-900 antialiased">
+        <nav aria-label="Main" class="border-b border-neutral-200 bg-white px-4 py-3 sm:px-6 lg:px-8">
+            <div class="flex flex-wrap gap-x-4 gap-y-1">
+                {% if app.user %}
+                    <a href="{{ path('app_home') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Dashboard</a>
+                    <a href="{{ path('app_alias_new') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Create alias</a>
+                    <a href="{{ path('app_logout') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Log out</a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Log in</a>
+                    <a href="{{ path('app_register') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Register</a>
+                {% endif %}
+            </div>
         </nav>
-        <main>
+        <main class="max-w-[1000px] mx-auto px-4 py-8 sm:px-6 lg:px-8">
             {% block body %}{% endblock %}
         </main>
     </body>

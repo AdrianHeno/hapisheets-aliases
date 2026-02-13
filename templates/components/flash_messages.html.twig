@@ -1,0 +1,14 @@
+{# Flash: success / info / error banners. Renders app.flashes. #}
+{% set alert_styles = {
+    success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+    error: 'border-red-200 bg-red-50 text-red-800',
+    info: 'border-sky-200 bg-sky-50 text-sky-800',
+    warning: 'border-amber-200 bg-amber-50 text-amber-800'
+} %}
+{% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="mb-4 rounded-md border p-4 {{ alert_styles[label] ?? 'border-neutral-200 bg-neutral-50 text-neutral-800' }} {% if label == 'success' %}alert-success{% endif %}" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endfor %}
