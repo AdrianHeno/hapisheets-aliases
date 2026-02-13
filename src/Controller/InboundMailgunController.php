@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\InboundRaw;
+use App\Entity\Message;
 use App\Repository\AliasRepository;
 use App\Service\MailgunWebhookSignatureVerifier;
 use Doctrine\ORM\EntityManagerInterface;
@@ -87,12 +88,25 @@ class InboundMailgunController extends AbstractController
             throw new NotFoundHttpException('Alias not found.');
         }
 
+        $receivedAt = new \DateTimeImmutable();
+
         $inbound = new InboundRaw();
         $inbound->setAlias($alias);
-        $inbound->setReceivedAt(new \DateTimeImmutable());
+        $inbound->setReceivedAt($receivedAt);
         $inbound->setRawMime($body);
-
         $this->entityManager->persist($inbound);
+
+        // Create a Message so the email appears in the inbox UI (inbox lists Message, not InboundRaw)
+        $subject = $params['subject'] ?? $params['Subject'] ?? '(No subject)';
+        $fromAddress = $params['sender'] ?? $params['from'] ?? $params['From'] ?? '(Unknown)';
+        $message = new Message();
+        $message->setAlias($alias);
+        $message->setReceivedAt($receivedAt);
+        $message->setSubject(mb_substr((string) $subject, 0, 255));
+        $message->setFromAddress(mb_substr((string) $fromAddress, 0, 255));
+        $message->setBody($body);
+        $this->entityManager->persist($message);
+
         $this->entityManager->flush();
 
         return new Response('OK', Response::HTTP_OK);
