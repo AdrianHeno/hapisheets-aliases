@@ -33,6 +33,16 @@ class Message
     #[ORM\Column(type: 'text')]
     private ?string $body = null;
 
+    #[ORM\OneToOne(targetEntity: InboundRaw::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    private ?InboundRaw $inboundRaw = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $previewSnippet = null;
+
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private bool $hasHtmlBody = false;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -90,6 +100,39 @@ class Message
     public function setBody(string $body): static
     {
         $this->body = $body;
+        return $this;
+    }
+
+    public function getInboundRaw(): ?InboundRaw
+    {
+        return $this->inboundRaw;
+    }
+
+    public function setInboundRaw(?InboundRaw $inboundRaw): static
+    {
+        $this->inboundRaw = $inboundRaw;
+        return $this;
+    }
+
+    public function getPreviewSnippet(): ?string
+    {
+        return $this->previewSnippet;
+    }
+
+    public function setPreviewSnippet(?string $previewSnippet): static
+    {
+        $this->previewSnippet = $previewSnippet === null ? null : mb_substr($previewSnippet, 0, 255);
+        return $this;
+    }
+
+    public function hasHtmlBody(): bool
+    {
+        return $this->hasHtmlBody;
+    }
+
+    public function setHasHtmlBody(bool $hasHtmlBody): static
+    {
+        $this->hasHtmlBody = $hasHtmlBody;
         return $this;
     }
 }

@@ -7,6 +7,7 @@ namespace App\Controller;
 use App\Entity\InboundRaw;
 use App\Entity\Message;
 use App\Repository\AliasRepository;
+use App\Service\MimeParser;
 use App\Service\MailgunWebhookSignatureVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
@@ -23,6 +24,7 @@ class InboundMailgunController extends AbstractController
     public function __construct(
         private readonly AliasRepository $aliasRepository,
         private readonly EntityManagerInterface $entityManager,
+        private readonly MimeParser $mimeParser,
         private readonly MailgunWebhookSignatureVerifier $signatureVerifier,
         private readonly LoggerInterface $logger,
     ) {
@@ -105,6 +107,23 @@ class InboundMailgunController extends AbstractController
         $message->setSubject(mb_substr((string) $subject, 0, 255));
         $message->setFromAddress(mb_substr((string) $fromAddress, 0, 255));
         $message->setBody($body);
+        $message->setInboundRaw($inbound);
+
+        try {
+            $parsed = $this->mimeParser->parse($body);
+            $textForPreview = $parsed->textBody ?? '';
+            $preview = mb_substr(preg_replace('/\s+/', ' ', trim($textForPreview)) ?: '', 0, 120);
+            if ($preview !== '') {
+                $message->setPreviewSnippet($preview);
+            }
+            $message->setHasHtmlBody($parsed->htmlBody !== null && $parsed->htmlBody !== '');
+        } catch (\Throwable $e) {
+            $this->logger->warning('MIME parsing failed for inbound message', [
+                'exception' => $e,
+                'alias_id' => $alias->getId(),
+            ]);
+        }
+
         $this->entityManager->persist($message);
 
         $this->entityManager->flush();

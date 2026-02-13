@@ -11,6 +11,8 @@ php bin/console doctrine:schema:validate
 php bin/console make:migration
 php bin/console doctrine:migrations:migrate
 
+SQLite 3.35+ is required for migration rollbacks that use `DROP COLUMN` (see `docs/decisions.md`).
+
 ## Seed inbox messages (dev/test only)
 
 The route `POST /dev/inbound` exists only when `APP_ENV=dev` or `APP_ENV=test`. It creates a `Message` for an alias so you can test the inbox UI without real email.
@@ -37,7 +39,7 @@ In production, inbound email is received via a **Mailgun HTTP webhook**:
   - `recipient` — full recipient address (e.g. `localPart@hapisheets.com` or another configured domain).
   - `body-mime` — raw MIME of the message.
 - Optional (when `MAILGUN_WEBHOOK_SIGNING_KEY` is set): `timestamp`, `token`, `signature` — Mailgun webhook signature fields. If the key is set, the app verifies the signature (HMAC-SHA256 of `timestamp` + `token`) and a timestamp freshness check; if the key is not set, verification is skipped and a warning is logged.
-- On success it stores the raw MIME payload in the `InboundRaw` entity linked to the alias (by recipient local part, `enabled=true`).
+- On success it stores the raw MIME in `InboundRaw` and creates a `Message` for the inbox (subject, from, body; preview snippet and HTML flag are set from parsed MIME when parsing succeeds).
 
 Responses:
 

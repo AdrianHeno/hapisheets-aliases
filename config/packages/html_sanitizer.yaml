@@ -1,0 +1,16 @@
+# Sanitizer for email body HTML: allow common safe tags, strip scripts/iframes and dangerous attributes.
+# Injected into MimeParser as the "message_body" sanitizer (argument name: $messageBodySanitizer).
+framework:
+  html_sanitizer:
+    sanitizers:
+      message_body:
+        allow_safe_elements: true
+        max_input_length: 100000
+        drop_elements:
+          - script
+          - iframe
+          - object
+          - form
+        force_attributes:
+          a:
+            rel: 'noopener noreferrer'

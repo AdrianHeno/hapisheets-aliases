@@ -6,6 +6,7 @@ namespace App\Controller;
 
 use App\Entity\User;
 use App\Repository\MessageRepository;
+use App\Service\MimeParser;
 use App\Service\OwnerResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,6 +23,7 @@ class MessageController extends AbstractController
         private readonly MessageRepository $messageRepository,
         private readonly OwnerResolver $ownerResolver,
         private readonly EntityManagerInterface $entityManager,
+        private readonly MimeParser $mimeParser,
         private readonly string $aliasDomain = 'hapisheets.com',
     ) {
     }
@@ -33,11 +35,31 @@ class MessageController extends AbstractController
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException('You must be logged in.');
         }
+        // Type-narrow to User for OwnerResolver (getUser() returns UserInterface).
 
         $message = $this->ownerResolver->getMessageForUser($this->messageRepository, $id, $user);
 
+        $parsed = null;
+        $rawMime = null;
+        $inboundRaw = $message->getInboundRaw();
+        if ($inboundRaw !== null) {
+            $raw = $inboundRaw->getRawMime();
+            if ($raw !== null && $raw !== '') {
+                $rawMime = $raw;
+                $parsed = $this->mimeParser->parse($raw);
+            }
+        }
+        if ($rawMime === null) {
+            $rawMime = $message->getBody();
+        }
+
+        $bodySafeHtml = $parsed !== null ? $parsed->sanitizedHtmlBody : null;
+
         return $this->render('message/show.html.twig', [
             'message' => $message,
+            'parsed' => $parsed,
+            'raw_mime' => $rawMime,
+            'body_safe_html' => $bodySafeHtml,
             'alias_domain' => $this->aliasDomain,
         ]);
     }
@@ -49,6 +71,7 @@ class MessageController extends AbstractController
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException('You must be logged in.');
         }
+        // Type-narrow to User for OwnerResolver.
 
         $message = $this->ownerResolver->getMessageForUser($this->messageRepository, $id, $user);
         $alias = $message->getAlias();
