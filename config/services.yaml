@@ -33,3 +33,11 @@ services:
     App\Controller\DashboardController:
         bind:
             $aliasDomain: '%app.alias_domain%'
+
+    App\Controller\MessageController:
+        bind:
+            $aliasDomain: '%app.alias_domain%'
+
+    App\Controller\DevInboundController:
+        bind:
+            $aliasDomain: '%app.alias_domain%'

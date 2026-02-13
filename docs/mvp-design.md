@@ -18,15 +18,33 @@
 
 `id`, `email` (unique), `password` (hashed), `roles`, `created_at`.
 
+## Message entity
+
+| Field         | Type     | Notes |
+|---------------|----------|--------|
+| `id`          | integer  | PK. |
+| `alias_id`    | integer  | FK to Alias; required. |
+| `received_at` | datetime | When the message was received. |
+| `subject`     | string   | 255 chars. |
+| `from_address`| string   | 255 chars. |
+| `body`        | text     | Message body. |
+
+**Indexes:** Non-unique on `(alias_id, received_at)` for listing by alias by date.
+
+**Relationships:** Many-to-one to Alias.
+
 ## Routes / pages
 
-| Route                 | Method | Purpose |
-|-----------------------|--------|--------|
-| `/`                   | GET    | Dashboard: list current user's aliases; link to create. |
-| `/register`           | GET, POST | Register (email + password, then redirect to /dashboard). |
-| `/login`              | GET, POST | Login. |
-| `/logout`             | any    | Logout. |
-| `/aliases/new`        | GET, POST | Create alias. |
-| `/aliases/{id}/disable` | POST  | Disable alias (owner only); redirect back. |
+| Route                   | Method | Purpose |
+|-------------------------|--------|--------|
+| `/`                     | GET    | Dashboard: list current user's aliases; link to create, inbox, disable. |
+| `/register`             | GET, POST | Register (email + password, then redirect to /dashboard). |
+| `/login`                | GET, POST | Login. |
+| `/logout`               | any    | Logout. |
+| `/aliases/new`          | GET, POST | Create alias. |
+| `/aliases/{id}/inbox`   | GET    | Inbox: list messages for alias (owner only). |
+| `/aliases/{id}/disable` | POST   | Disable alias (owner only); redirect back. |
+| `/messages/{id}`        | GET    | View message (owner of message's alias only). |
+| `/messages/{id}/delete` | POST   | Delete message (owner only, CSRF). |
 
 Domain for display and mail is read from config, not DB.

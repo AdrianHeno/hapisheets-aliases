@@ -13,9 +13,11 @@ A web app for generating and managing email aliases under **hapisheets.com** (e.
 | **Dashboard** | View all your aliases in a table: full address, status (Enabled/Disabled), created date, and a **Create alias** link. Both `/` and `/dashboard` show the same dashboard. |
 | **Create alias** | Generate a new alias with one click (no fields to fill). Format: word + short suffix (e.g. `river-9k2f@hapisheets.com`). You are redirected to the dashboard with a success message showing the new address. |
 | **Disable alias** | Turn off an alias from the dashboard via the **Disable** button in the Actions column. Disabled aliases show status “Disabled” and will reject mail when inbound email is added later. Only your own aliases can be disabled (others return 404). |
+| **Inbox** | From the dashboard, open **Inbox** for an alias to see messages received by that alias (From, Subject, Received, View). Only the alias owner can access an inbox; others get 404. |
+| **View / delete message** | Open a message from the inbox to read it (subject, from, date, body). You can **Delete message**; after delete you are redirected back to that alias's inbox. Only the alias owner can view or delete; others get 404. |
 | **Log out** | A **Log out** link is shown in the global nav when you are logged in; it points to `/logout` and ends your session. When not authenticated, the nav shows **Log in** and **Register** instead. |
 
-All alias actions are scoped to the logged-in user; you only see and can change your own aliases.
+All alias and message actions are scoped to the logged-in user; you only see and can change your own aliases and their messages.
 
 ---
 
@@ -65,9 +67,9 @@ Or use your own web server with the `public/` directory as document root.
 
 After login you land on the **Dashboard**:
 
-- See all your aliases in a table: **Address** (`localPart@hapisheets.com`), **Status** (Enabled/Disabled), **Created** (date/time).
+- See all your aliases in a table: **Address** (`localPart@hapisheets.com`), **Status** (Enabled/Disabled), **Created** (date/time), **Actions** (Inbox, Disable when enabled).
 - Use **Create alias** to add a new one.
-- Use **Disable** next to an enabled alias to turn it off; you get a success flash and the list updates.
+- Use **Inbox** to see messages for that alias; use **Disable** next to an enabled alias to turn it off (success flash and list updates).
 
 ### 5. Create alias (`/aliases/new`)
 
@@ -75,12 +77,22 @@ After login you land on the **Dashboard**:
 - On the “Create alias” page, click the **Create alias** button (no fields to fill).
 - The app generates a unique local part (e.g. `river-9k2f`), creates the alias, and redirects you to the dashboard with a success message showing the full address (e.g. `river-9k2f@hapisheets.com`).
 
-### 6. Disable alias
+### 6. Inbox (`/aliases/{id}/inbox`)
+
+- On the dashboard, click **Inbox** for an alias.
+- You see messages for that alias (From, Subject, Received) or "No messages yet." Click **View** to open a message.
+
+### 7. View and delete message (`/messages/{id}`)
+
+- From an inbox, click **View** on a message to read it (subject, from, received date, body).
+- Use **Delete message** to remove it; you are redirected to that alias's inbox with a success flash.
+
+### 8. Disable alias
 
 - On the dashboard, find the alias and click **Disable** in the Actions column.
-- The alias is disabled and a confirmation message is shown. Disabled aliases show status “Disabled” and no Disable button.
+- The alias is disabled and a confirmation message is shown. Disabled aliases show status "Disabled" and no Disable button.
 
-### 7. Log out
+### 9. Log out
 
 - Click **Log out** in the global navigation (or go to `/logout`) to end your session. When logged out, the nav shows **Log in** and **Register** again. You will need to log in again to access the dashboard or alias actions.
 
@@ -96,9 +108,12 @@ After login you land on the **Dashboard**:
 | `/login` | GET, POST | Log in (email + password). |
 | `/logout` | GET | Log out (link in nav when authenticated). |
 | `/aliases/new` | GET, POST | Create alias page and form submission. |
+| `/aliases/{id}/inbox` | GET | Inbox: list messages for an alias (owner only; 404 otherwise). |
 | `/aliases/{id}/disable` | POST | Disable an alias (must own it; returns 404 otherwise). |
+| `/messages/{id}` | GET | View a message (owner of the message’s alias only; 404 otherwise). |
+| `/messages/{id}/delete` | POST | Delete a message (owner only, CSRF required; 404 otherwise). |
 
-Protected routes (dashboard and alias actions) require a logged-in user; otherwise you are redirected to `/login`. Registration and login are public. Attempting to disable an alias you don’t own returns 404.
+Protected routes (dashboard, alias and message actions) require a logged-in user; otherwise you are redirected to `/login`. Registration and login are public. Attempting to access another user’s alias or message returns 404.
 
 ---
 
@@ -122,7 +137,7 @@ Protected routes (dashboard and alias actions) require a logged-in user; otherwi
 | `php bin/console doctrine:migrations:migrate` | Run pending migrations. |
 | `php bin/console make:migration` | Generate a new migration (after entity changes). |
 
-More detail: `docs/dev-commands.md`.
+More detail: `docs/dev-commands.md`. To seed inbox messages locally, use `POST /dev/inbound` (dev/test only); see dev-commands.md.
 
 ---
 

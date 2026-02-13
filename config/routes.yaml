@@ -9,3 +9,15 @@
 
 controllers:
     resource: routing.controllers
+
+when@dev:
+    _dev_inbound:
+        path: /dev/inbound
+        controller: App\Controller\DevInboundController::inbound
+        methods: [POST]
+
+when@test:
+    _dev_inbound_test:
+        path: /dev/inbound
+        controller: App\Controller\DevInboundController::inbound
+        methods: [POST]
