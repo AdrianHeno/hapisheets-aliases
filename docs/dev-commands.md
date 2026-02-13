@@ -26,3 +26,24 @@ curl -X POST http://127.0.0.1:8000/dev/inbound \
 ```
 
 Response: `201` with `{"id": <message_id>}`.
+
+## Mailgun inbound webhook (prod)
+
+In production, inbound email is received via a **Mailgun HTTP webhook**:
+
+- URL: `POST /inbound/mailgun/raw-mime`
+- Content type: `multipart/form-data`
+- Required fields:
+  - `recipient` — full recipient address (e.g. `localPart@hapisheets.com` or another configured domain).
+  - `body-mime` — raw MIME of the message.
+  - `timestamp`, `token`, `signature` — Mailgun webhook signature fields.
+- The app verifies the signature using `MAILGUN_WEBHOOK_SIGNING_KEY` (HMAC-SHA256 of `timestamp` + `token`) and a timestamp freshness check.
+- On success it stores the raw MIME payload in the `InboundRaw` entity linked to the alias (by recipient local part, `enabled=true`).
+
+Responses:
+
+- `200 OK` with plain text body `OK` when the payload is accepted.
+- `400` plain text when required fields (`recipient` or `body-mime`) are missing or empty.
+- `403` plain text when the signature or timestamp window is invalid.
+- `404` when the alias is not found or disabled.
+- `500` when the webhook signing key is not configured; an error is logged for operators.

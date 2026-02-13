@@ -10,7 +10,7 @@ A web app that lets users generate and manage email aliases under hapisheets.com
 - User can disable an alias
 
 ## Email Features (later / in progress)
-- Inbound email receiving (AWS SES) -> store messages
+- Inbound email receiving via provider webhooks (currently Mailgun) -> store messages (raw MIME + parsed fields)
 - **Inbox UI** — A minimal inbox (list messages per alias, view message, delete) is implemented for testing. See README and `docs/mvp-design.md` for current routes and data model.
 - Optional forwarding per alias (with verification)
 
