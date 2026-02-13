@@ -1,6 +1,6 @@
 # Hapisheets Alias Manager
 
-A web app for generating and managing email aliases under **hapisheets.com** (e.g. for form signups and online accounts). Built with Symfony and Twig.
+A web app for generating and managing email aliases under **hapisheets.com** (e.g. for form signups and online accounts). Built with Symfony and Twig
 
 ---
 
@@ -149,4 +149,4 @@ More detail: `docs/dev-commands.md`. To seed inbox messages locally, use `POST /
 - `docs/spec.md` — Product goal and MVP scope.
 - `docs/mvp-design.md` — Data model and routes design.
 - `docs/decisions.md` — Tech and product decisions (domain, alias format, etc.).
-- `docs/working-agreement.md` — How we work (tasks, acceptance criteria, security).
+- `docs/working-agreement.md` — How we work (tasks, acceptance criteria, security). 
