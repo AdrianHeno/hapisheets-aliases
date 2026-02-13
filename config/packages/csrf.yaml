@@ -9,3 +9,5 @@ framework:
             - submit
             - authenticate
             - logout
+            - create_alias
+            - disable_alias

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block body %}
+    <h1>Dashboard</h1>
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }}">{{ message }}</div>
+        {% endfor %}
+    {% endfor %}
+
+    <p><a href="{{ path('app_alias_new') }}">Create alias</a></p>
+
+    <h2>Your aliases</h2>
+    {% if aliases is empty %}
+        <p>You have no aliases yet. <a href="{{ path('app_alias_new') }}">Create one</a>.</p>
+    {% else %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Address</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alias in aliases %}
+                    <tr>
+                        <td>{{ alias.localPart }}@{{ alias_domain }}</td>
+                        <td>{{ alias.enabled ? 'Enabled' : 'Disabled' }}</td>
+                        <td>{{ alias.createdAt|date('Y-m-d H:i') }}</td>
+                        <td>
+                            {% if alias.enabled %}
+                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" style="display: inline;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('disable_alias') }}">
+                                    <button type="submit">Disable</button>
+                                </form>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% endblock %}
