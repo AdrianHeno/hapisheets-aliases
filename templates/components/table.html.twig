@@ -1,0 +1,13 @@
+{# Table: zebra rows, subtle borders. Embed and fill thead / tbody blocks. #}
+<div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-neutral-200 border border-neutral-200 rounded-lg overflow-hidden">
+        <thead class="bg-neutral-50">
+            <tr>
+                {% block thead %}{% endblock %}
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-neutral-200 bg-white [&>tr:nth-child(even)]:bg-neutral-50/50">
+            {% block tbody %}{% endblock %}
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,18 @@
+{# Typography: page/section heading. level: 1-6, content: string or block. #}
+{% set l = level|default(1) %}
+{% set tag = 'h' ~ l %}
+{% set size_map = {
+    1: 'text-2xl font-semibold text-neutral-900 tracking-tight',
+    2: 'text-xl font-semibold text-neutral-900',
+    3: 'text-lg font-medium text-neutral-800',
+    4: 'text-base font-medium text-neutral-800',
+    5: 'text-sm font-medium text-neutral-700',
+    6: 'text-sm font-medium text-neutral-600'
+} %}
+<{{ tag }} class="{{ size_map[l] ?? size_map[1] }} {{ class|default('') }}">
+    {% if content is defined %}
+        {{ content }}
+    {% else %}
+        {% block content %}{% endblock %}
+    {% endif %}
+</{{ tag }}>

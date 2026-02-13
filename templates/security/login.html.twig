@@ -1,23 +1,34 @@
 {% extends 'base.html.twig' %}
+{% import 'components/input_classes.html.twig' as input_ui %}
 
 {% block title %}Log in{% endblock %}
 
 {% block body %}
-    <h1>Log in</h1>
+    {% set input_class = input_ui.classes() %}
+    {% include 'components/heading.html.twig' with { level: 1, content: 'Log in' } %}
+
     {% if error %}
-        <p class="error">{{ error.messageKey|trans(error.messageData, 'security') }}</p>
+        {% include 'components/form_errors.html.twig' with { errors: [error.messageKey|trans(error.messageData, 'security')] } %}
     {% endif %}
-    <form method="post" action="{{ path('app_login') }}">
+
+    <form method="post" action="{{ path('app_login') }}" class="max-w-sm mt-4">
         <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-        <div>
-            <label for="username">Email</label>
-            <input type="text" id="username" name="_username" value="{{ last_username }}" autocomplete="email" required>
+
+        {% embed 'components/form_group.html.twig' with { label_for: 'username', label_text: 'Email', required: true } %}
+            {% block input %}
+                <input type="text" id="username" name="_username" value="{{ last_username }}" autocomplete="email" required class="{{ input_class }}">
+            {% endblock %}
+        {% endembed %}
+
+        {% embed 'components/form_group.html.twig' with { label_for: 'password', label_text: 'Password', required: true } %}
+            {% block input %}
+                <input type="password" id="password" name="_password" autocomplete="current-password" required class="{{ input_class }}">
+            {% endblock %}
+        {% endembed %}
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+            {% include 'components/button.html.twig' with { variant: 'primary', type: 'submit', label: 'Log in' } %}
+            <a href="{{ path('app_register') }}" class="text-sm text-neutral-600 hover:text-neutral-900">Don't have an account? Register</a>
         </div>
-        <div>
-            <label for="password">Password</label>
-            <input type="password" id="password" name="_password" autocomplete="current-password" required>
-        </div>
-        <button type="submit">Log in</button>
     </form>
-    <p><a href="{{ path('app_register') }}">Don't have an account? Register</a></p>
 {% endblock %}
