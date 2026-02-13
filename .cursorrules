@@ -1,0 +1,14 @@
+You are working in a Symfony (latest stable) + Twig project.
+
+Always read and follow:
+- docs/spec.md
+- docs/decisions.md
+- docs/working-agreement.md
+
+Rules:
+- Make minimal changes; do not refactor unrelated code.
+- Prefer Symfony conventions (controllers, services, Doctrine entities, migrations).
+- For any non-trivial change, add/update PHPUnit tests.
+- Provide edits as diffs or explicit file changes.
+- If uncertain, ask for clarification rather than guessing.
+- Never modify secrets or .env.local; never commit var/ or vendor/.

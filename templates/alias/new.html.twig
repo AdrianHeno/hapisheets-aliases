@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Create alias{% endblock %}
+
+{% block body %}
+    <h1>Create alias</h1>
+    <p>Create a new email alias under {{ alias_domain }}. No input needed—we’ll generate one for you.</p>
+    <form method="post" action="{{ path('app_alias_new') }}">
+        <input type="hidden" name="_token" value="{{ csrf_token('create_alias') }}">
+        <button type="submit">Create alias</button>
+    </form>
+{% endblock %}
