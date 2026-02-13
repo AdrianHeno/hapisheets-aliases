@@ -10,6 +10,7 @@ use App\Service\MailgunWebhookSignatureVerifier;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -49,11 +50,12 @@ class InboundMailgunController extends AbstractController
         }
 
         $recipient = $params['recipient'] ?? null;
-        $bodyMime = $params['body-mime'] ?? null;
-        $bodyPlain = $params['body-plain'] ?? null;
+        $bodyMime = $this->getBodyParamOrFile($params, $request, 'body-mime');
+        $bodyPlain = $this->getBodyParamOrFile($params, $request, 'body-plain');
+        $bodyHtml = $this->getBodyParamOrFile($params, $request, 'body-html');
 
-        // Mailgun sends body-mime only when the forward URL ends with "mime" or "raw-mime"; otherwise it sends body-plain/body-html
-        $body = $bodyMime !== null && $bodyMime !== '' ? (string) $bodyMime : ($bodyPlain !== null ? (string) $bodyPlain : '');
+        // Mailgun: body-mime when URL ends with raw-mime; otherwise body-plain / body-html (multipart may send as file parts)
+        $body = $bodyMime !== '' ? $bodyMime : ($bodyPlain !== '' ? $bodyPlain : $bodyHtml);
 
         if ($recipient === null || $recipient === '') {
             $this->logBadRequest($request, $params, 'missing_recipient');
@@ -128,7 +130,27 @@ class InboundMailgunController extends AbstractController
             'reason' => $reason,
             'content_type' => $request->headers->get('Content-Type'),
             'request_keys' => array_keys($params),
+            'file_keys' => array_keys($request->files->all()),
             'content_length' => $request->headers->get('Content-Length'),
         ]);
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     */
+    private function getBodyParamOrFile(array $params, Request $request, string $key): string
+    {
+        $value = $params[$key] ?? null;
+        if ($value !== null && $value !== '') {
+            return (string) $value;
+        }
+        if ($request->files->has($key)) {
+            $file = $request->files->get($key);
+            if ($file instanceof UploadedFile) {
+                $content = file_get_contents($file->getPathname());
+                return $content !== false ? $content : '';
+            }
+        }
+        return '';
     }
 }
