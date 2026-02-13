@@ -7,7 +7,9 @@ namespace App\Controller;
 use App\Entity\Alias;
 use App\Entity\User;
 use App\Repository\AliasRepository;
+use App\Repository\MessageRepository;
 use App\Service\AliasGenerator;
+use App\Service\OwnerResolver;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,6 +25,8 @@ class AliasController extends AbstractController
     public function __construct(
         private readonly AliasGenerator $aliasGenerator,
         private readonly AliasRepository $aliasRepository,
+        private readonly MessageRepository $messageRepository,
+        private readonly OwnerResolver $ownerResolver,
         private readonly EntityManagerInterface $entityManager,
         private readonly string $aliasDomain = 'hapisheets.com',
     ) {
@@ -59,6 +63,28 @@ class AliasController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/inbox', name: 'app_alias_inbox', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function inbox(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('You must be logged in.');
+        }
+
+        $alias = $this->ownerResolver->getAliasForUser($this->aliasRepository, $id, $user);
+
+        $messages = $this->messageRepository->findBy(
+            ['alias' => $alias],
+            ['receivedAt' => 'DESC']
+        );
+
+        return $this->render('alias/inbox.html.twig', [
+            'alias' => $alias,
+            'messages' => $messages,
+            'alias_domain' => $this->aliasDomain,
+        ]);
+    }
+
     #[Route('/{id}/disable', name: 'app_alias_disable', methods: ['POST'], requirements: ['id' => '\d+'])]
     public function disable(int $id, Request $request): Response
     {
@@ -67,10 +93,7 @@ class AliasController extends AbstractController
             throw $this->createAccessDeniedException('You must be logged in.');
         }
 
-        $alias = $this->aliasRepository->find($id);
-        if ($alias === null || $alias->getUser()?->getId() !== $user->getId()) {
-            throw new NotFoundHttpException('Alias not found.');
-        }
+        $alias = $this->ownerResolver->getAliasForUser($this->aliasRepository, $id, $user);
 
         $token = $request->request->get('_token');
         if (!$this->isCsrfTokenValid('disable_alias', $token)) {

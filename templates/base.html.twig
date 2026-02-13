@@ -17,12 +17,12 @@
         <nav aria-label="Main" class="border-b border-neutral-200 bg-white px-4 py-3 sm:px-6 lg:px-8">
             <div class="flex flex-wrap gap-x-4 gap-y-1">
                 {% if app.user %}
-                    <a href="{{ path('app_home') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Dashboard</a>
-                    <a href="{{ path('app_alias_new') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Create alias</a>
-                    <a href="{{ path('app_logout') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Log out</a>
+                    <a href="{{ path('app_home') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 rounded">Dashboard</a>
+                    <a href="{{ path('app_alias_new') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 rounded">Create alias</a>
+                    <a href="{{ path('app_logout') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 rounded">Log out</a>
                 {% else %}
-                    <a href="{{ path('app_login') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Log in</a>
-                    <a href="{{ path('app_register') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">Register</a>
+                    <a href="{{ path('app_login') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 rounded">Log in</a>
+                    <a href="{{ path('app_register') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500 focus-visible:ring-offset-2 rounded">Register</a>
                 {% endif %}
             </div>
         </nav>

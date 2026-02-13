@@ -1,0 +1,40 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inbox — {{ alias.localPart }}@{{ alias_domain }}{% endblock %}
+
+{% block body %}
+    {% include 'components/heading.html.twig' with { level: 1, content: 'Inbox' } %}
+
+    {% include 'components/flash_messages.html.twig' %}
+
+    <p class="mt-1 text-neutral-600">Messages for <strong>{{ alias.localPart }}@{{ alias_domain }}</strong></p>
+
+    <p class="mb-4">
+        <a href="{{ path('app_home') }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">← Dashboard</a>
+    </p>
+
+    {% if messages is empty %}
+        <p class="text-neutral-600">No messages yet.</p>
+    {% else %}
+        {% embed 'components/table.html.twig' %}
+            {% block thead %}
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">From</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Subject</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Received</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Actions</th>
+            {% endblock %}
+            {% block tbody %}
+                {% for msg in messages %}
+                    <tr>
+                        <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ msg.fromAddress }}</td>
+                        <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ msg.subject }}</td>
+                        <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ msg.receivedAt|date('Y-m-d H:i') }}</td>
+                        <td class="px-4 py-3 text-left text-sm">
+                            {% include 'components/button.html.twig' with { variant: 'secondary', label: 'View', url: path('app_message_show', { id: msg.id }) } %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endblock %}
+        {% endembed %}
+    {% endif %}
+{% endblock %}

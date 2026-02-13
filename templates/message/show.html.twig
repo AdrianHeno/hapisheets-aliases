@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ message.subject }}{% endblock %}
+
+{% block body %}
+    {% include 'components/heading.html.twig' with { level: 1, content: message.subject } %}
+
+    <p class="mt-2 text-sm text-neutral-600">
+        <strong>From:</strong> {{ message.fromAddress }} &middot;
+        <strong>Received:</strong> {{ message.receivedAt|date('Y-m-d H:i') }}
+    </p>
+
+    <p class="mb-4">
+        <a href="{{ path('app_alias_inbox', { id: message.alias.id }) }}" class="text-sm font-medium text-neutral-700 hover:text-neutral-900">← Inbox ({{ message.alias.localPart }}@{{ alias_domain }})</a>
+    </p>
+
+    <div class="rounded-md border border-neutral-200 bg-neutral-50 p-4 text-neutral-900 whitespace-pre-wrap">{{ message.body }}</div>
+
+    <form method="post" action="{{ path('app_message_delete', { id: message.id }) }}" class="mt-4" data-turbo="false">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete_message') }}">
+        {% include 'components/button.html.twig' with { variant: 'secondary', type: 'submit', label: 'Delete message' } %}
+    </form>
+{% endblock %}

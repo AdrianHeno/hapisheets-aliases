@@ -18,10 +18,10 @@
     {% else %}
         {% embed 'components/table.html.twig' %}
             {% block thead %}
-                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Address</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Status</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Created</th>
-                <th class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Actions</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Address</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Status</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Created</th>
+                <th scope="col" class="px-4 py-3 text-left text-sm font-medium text-neutral-700">Actions</th>
             {% endblock %}
             {% block tbody %}
                 {% for alias in aliases %}
@@ -32,13 +32,14 @@
                         </td>
                         <td class="px-4 py-3 text-left text-sm text-neutral-900">{{ alias.createdAt|date('Y-m-d H:i') }}</td>
                         <td class="px-4 py-3 text-left text-sm">
+                            {% include 'components/button.html.twig' with { variant: 'secondary', label: 'Inbox', url: path('app_alias_inbox', { id: alias.id }) } %}
                             {% if alias.enabled %}
-                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" class="inline" data-turbo="false">
+                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" class="inline ml-2" data-turbo="false">
                                     <input type="hidden" name="_token" value="{{ csrf_token('disable_alias') }}">
                                     {% include 'components/button.html.twig' with { variant: 'secondary', type: 'submit', label: 'Disable' } %}
                                 </form>
                             {% else %}
-                                <span class="text-neutral-500">—</span>
+                                <span class="text-neutral-500 ml-2">—</span>
                             {% endif %}
                         </td>
                     </tr>
