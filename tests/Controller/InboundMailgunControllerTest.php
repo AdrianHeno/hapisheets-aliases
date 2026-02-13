@@ -48,6 +48,37 @@ class InboundMailgunControllerTest extends WebTestCase
         self::assertSame($alias->getId(), $raws[0]->getAlias()?->getId());
     }
 
+    public function testPostValidPayloadWithBodyPlainFallbackReturns200WhenBodyMimeAbsent(): void
+    {
+        $client = static::createClient();
+        $user = $this->createAndPersistUser();
+        $localPart = 'bodyplain-' . uniqid('', true);
+        $alias = $this->createAliasForUser($user, $localPart);
+
+        $bodyPlain = 'Plain text body when Mailgun does not send body-mime';
+        $client->request(
+            'POST',
+            '/inbound/mailgun/raw-mime',
+            array_merge(
+                $this->makeMailgunSignatureParams(),
+                [
+                    'recipient' => $localPart . '@example.com',
+                    'body-plain' => $bodyPlain,
+                ]
+            )
+        );
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame('OK', $client->getResponse()->getContent());
+
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $em->clear();
+        $raws = $em->getRepository(InboundRaw::class)->findBy(['alias' => $alias], ['receivedAt' => 'DESC'], 1);
+        self::assertCount(1, $raws);
+        self::assertSame($bodyPlain, $raws[0]->getRawMime());
+    }
+
     public function testPostRecipientLocalPartIsLowercased(): void
     {
         $client = static::createClient();
@@ -98,7 +129,7 @@ class InboundMailgunControllerTest extends WebTestCase
         );
 
         self::assertResponseStatusCodeSame(400);
-        self::assertStringContainsString('body-mime', $client->getResponse()->getContent());
+        self::assertStringContainsString('body', $client->getResponse()->getContent());
     }
 
     public function testPostEmptyRecipientReturns400(): void

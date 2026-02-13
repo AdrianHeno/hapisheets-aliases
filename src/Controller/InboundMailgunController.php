@@ -48,16 +48,25 @@ class InboundMailgunController extends AbstractController
 
         $recipient = $request->request->get('recipient');
         $bodyMime = $request->request->get('body-mime');
+        $bodyPlain = $request->request->get('body-plain');
 
-        if ($recipient === null || $bodyMime === null) {
-            return new Response('Missing required fields: recipient, body-mime.', Response::HTTP_BAD_REQUEST);
+        // Mailgun sends body-mime only when the forward URL ends with "mime" or "raw-mime"; otherwise it sends body-plain/body-html
+        $body = $bodyMime !== null && $bodyMime !== '' ? (string) $bodyMime : ($bodyPlain !== null ? (string) $bodyPlain : '');
+
+        if ($recipient === null || $recipient === '') {
+            $this->logger->warning('Mailgun raw-mime webhook missing recipient.', ['request_keys' => array_keys($request->request->all())]);
+            return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
         }
 
         $recipient = trim((string) $recipient);
-        $bodyMime = (string) $bodyMime;
+        if ($recipient === '') {
+            $this->logger->warning('Mailgun raw-mime webhook empty recipient.', ['request_keys' => array_keys($request->request->all())]);
+            return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
+        }
 
-        if ($recipient === '' || $bodyMime === '') {
-            return new Response('Missing required fields: recipient, body-mime.', Response::HTTP_BAD_REQUEST);
+        if ($body === '') {
+            $this->logger->warning('Mailgun raw-mime webhook missing body (body-mime and body-plain empty or absent). Ensure forward URL ends with raw-mime for raw MIME, or body-plain will be used.', ['request_keys' => array_keys($request->request->all())]);
+            return new Response('Missing required fields: recipient, body.', Response::HTTP_BAD_REQUEST);
         }
 
         $atPos = strpos($recipient, '@');
@@ -77,7 +86,7 @@ class InboundMailgunController extends AbstractController
         $inbound = new InboundRaw();
         $inbound->setAlias($alias);
         $inbound->setReceivedAt(new \DateTimeImmutable());
-        $inbound->setRawMime($bodyMime);
+        $inbound->setRawMime($body);
 
         $this->entityManager->persist($inbound);
         $this->entityManager->flush();
