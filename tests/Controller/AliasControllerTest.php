@@ -10,8 +10,6 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
-
 class AliasControllerTest extends WebTestCase
 {
     public function testNewGetRedirectsToLoginWhenNotAuthenticated(): void
@@ -82,9 +80,16 @@ class AliasControllerTest extends WebTestCase
         $owner = $this->createAndPersistUser($client);
         $alias = $this->createAliasForUser($owner, 'other-alias-' . uniqid('', true));
         $otherUser = $this->createAndPersistUser($client);
+        $this->createAliasForUser($otherUser, 'my-alias-' . uniqid('', true)); // so dashboard has a disable form
         $client->loginUser($otherUser);
 
-        $token = static::getContainer()->get(CsrfTokenManagerInterface::class)->getToken('disable_alias')->getValue();
+        $client->request('GET', '/');
+        self::assertResponseIsSuccessful();
+        $form = $client->getCrawler()->selectButton('Disable')->first()->form();
+        $values = $form->getValues();
+        $token = $values['_token'] ?? null;
+        self::assertNotNull($token, 'Disable form should include CSRF token');
+
         $client->request('POST', '/aliases/' . $alias->getId() . '/disable', ['_token' => $token]);
 
         self::assertResponseStatusCodeSame(404);

@@ -34,7 +34,7 @@
                         <td>{{ alias.createdAt|date('Y-m-d H:i') }}</td>
                         <td>
                             {% if alias.enabled %}
-                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" style="display: inline;">
+                                <form method="post" action="{{ path('app_alias_disable', { id: alias.id }) }}" style="display: inline;" data-turbo="false">
                                     <input type="hidden" name="_token" value="{{ csrf_token('disable_alias') }}">
                                     <button type="submit">Disable</button>
                                 </form>
