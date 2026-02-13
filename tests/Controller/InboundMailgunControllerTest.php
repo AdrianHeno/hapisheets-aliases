@@ -252,6 +252,42 @@ class InboundMailgunControllerTest extends WebTestCase
         self::assertResponseStatusCodeSame(403);
     }
 
+    /**
+     * When the signing key is not set, the webhook accepts requests with only recipient and body-mime (no signature).
+     *
+     * @runInSeparateProcess
+     */
+    public function testPostValidPayloadWithoutSignatureSucceedsWhenSigningKeyNotSet(): void
+    {
+        putenv('MAILGUN_WEBHOOK_SIGNING_KEY=');
+        $_ENV['MAILGUN_WEBHOOK_SIGNING_KEY'] = '';
+        $_SERVER['MAILGUN_WEBHOOK_SIGNING_KEY'] = '';
+
+        $client = static::createClient();
+        $user = $this->createAndPersistUser();
+        $localPart = 'no-sig-' . uniqid('', true);
+        $alias = $this->createAliasForUser($user, $localPart);
+
+        $client->request(
+            'POST',
+            '/inbound/mailgun/raw-mime',
+            [
+                'recipient' => $localPart . '@example.com',
+                'body-mime' => 'Raw MIME content without signature',
+            ]
+        );
+
+        self::assertResponseStatusCodeSame(200);
+        self::assertSame('OK', $client->getResponse()->getContent());
+
+        $container = static::getContainer();
+        $em = $container->get(EntityManagerInterface::class);
+        $em->clear();
+        $raws = $em->getRepository(InboundRaw::class)->findBy(['alias' => $alias], ['receivedAt' => 'DESC'], 1);
+        self::assertCount(1, $raws);
+        self::assertSame('Raw MIME content without signature', $raws[0]->getRawMime());
+    }
+
     /** @return array{timestamp: string, token: string, signature: string} */
     private function makeMailgunSignatureParams(): array
     {

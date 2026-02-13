@@ -29,22 +29,21 @@ class InboundMailgunController extends AbstractController
     #[Route('/raw-mime', name: 'app_inbound_mailgun_raw_mime', methods: ['POST'])]
     public function rawMime(Request $request): Response
     {
-        if (!$this->signatureVerifier->isConfigured()) {
-            $this->logger->error('Mailgun webhook signature verification skipped: MAILGUN_WEBHOOK_SIGNING_KEY is not set.');
-            return new Response('Webhook signing key not configured.', Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
+        if ($this->signatureVerifier->isConfigured()) {
+            $timestamp = $request->request->get('timestamp');
+            $token = $request->request->get('token');
+            $signature = $request->request->get('signature');
+            $timestamp = $timestamp !== null ? (string) $timestamp : null;
+            $token = $token !== null ? (string) $token : null;
+            $signature = $signature !== null ? (string) $signature : null;
 
-        $timestamp = $request->request->get('timestamp');
-        $token = $request->request->get('token');
-        $signature = $request->request->get('signature');
-        $timestamp = $timestamp !== null ? (string) $timestamp : null;
-        $token = $token !== null ? (string) $token : null;
-        $signature = $signature !== null ? (string) $signature : null;
-
-        if ($timestamp === null || $token === null || $signature === null
-            || !$this->signatureVerifier->isTimestampFresh($timestamp)
-            || !$this->signatureVerifier->verify($timestamp, $token, $signature)) {
-            return new Response('Invalid signature.', Response::HTTP_FORBIDDEN);
+            if ($timestamp === null || $token === null || $signature === null
+                || !$this->signatureVerifier->isTimestampFresh($timestamp)
+                || !$this->signatureVerifier->verify($timestamp, $token, $signature)) {
+                return new Response('Invalid signature.', Response::HTTP_FORBIDDEN);
+            }
+        } else {
+            $this->logger->warning('Mailgun webhook signature verification skipped: MAILGUN_WEBHOOK_SIGNING_KEY is not set.');
         }
 
         $recipient = $request->request->get('recipient');
